@@ -14,8 +14,12 @@ program's exit status when it ends. It is a memory-safe Rust successor to
 capsule -- alacritty -e nu
 ```
 
-Status: pre-release, no code yet. See [`AGENTS.md`](AGENTS.md) for the scope,
-including what "X11 support" does and does not mean here.
+Status: pre-release, no code yet. The product is in [`PRD.md`](PRD.md), the
+requirements in [`doc/capsule.texi`](doc/capsule.texi), and the work in
+[`PLAN.md`](PLAN.md) and [`TODO.md`](TODO.md).
+
+Conforms to The Steelbore Standard v2.14 — Category B, tailored (CLI Standard
+rules 4 and 7, §24.2; see [`COMPLIANCE.md`](COMPLIANCE.md)).
 
 ## Project Posture
 
@@ -24,6 +28,9 @@ Capsule is a **personal hobby project** under the Spacecraft Software umbrella
 support commitment. Contributions are welcome and accepted at the maintainer's
 discretion. See [`NOTICE.md`](NOTICE.md) and
 [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+Assurance: **Category B** (Standard §19). A compositor crash ends every
+program in the session, so failure can lose unsaved work.
 
 ## License
 

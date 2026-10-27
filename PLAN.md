@@ -2,81 +2,151 @@
 SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
 SPDX-License-Identifier: CC-BY-SA-4.0
 -->
+<!-- GFM Document
+     title:      Capsule — Plan
+     author:     Mohamed Hammad & Spacecraft Software
+     date:       2026-10-27
+     version:    0.1.0
+     license:    CC-BY-SA-4.0
+     project:    Capsule
+     website:    https://Capsule.SpacecraftSoftware.org/
+-->
 
 # Capsule — Plan
 
-MVP: M0–M4 — Capsule v0.1 in the Bravais greeter
+MVP: M0–M5 — Capsule v0.1 in the Bravais greeter
 
-Each item is ticked when its work is done and checked, never when it is
-started (Standard §17.5). Items ending `(optional)` never count toward a
-milestone's figure. Scope and invariants live in [`AGENTS.md`](AGENTS.md).
+This is the §17.5 plan for [`PRD.md`](PRD.md). It cuts the PRD's milestones into work
+packages; the requirements themselves live in [`doc/capsule.texi`](doc/capsule.texi) (from G1,
+in `doc/requirements.toml`) and are never restated here. Each `P-` item names the requirements
+it discharges. **Done rule:** a requirement-backed item is ticked when every requirement it
+cites is `verified` in the traceability matrix (`nu tools/trace.nu`); an infrastructure or gate
+item is ticked when it has landed on `main` and its gate record is written. Executable tasks
+are in [`TODO.md`](TODO.md).
 
-## M0 — Workspace, gates and command line
+Template: `/spacecraft-software/escapepod` (tools, CI, posture set, packaging triad).
+Skills per milestone: `microsoft-rust-guidelines` before any `.rs`, with
+`spacecraft-rust-guidelines` for the event loop and the budgets; `spacecraft-cli-standard` and
+`spacecraft-agentic-cli` at M1; `steelbore-color-palette` and
+`spacecraft-accessibility-support` at M1–M2; `spacecraft-nix-guidelines` for `flake.nix` and
+`packaging/default.nix`; `spacecraft-guile-guidelines` for `packaging/guix.scm`;
+`spacecraft-texinfo-document` for the manual; `spacecraft-nu-guidelines` for `tools/`.
 
-- [ ] P-001 Cargo workspace: one `capsule` binary crate, pinned toolchain
-- [ ] P-002 `flake.nix` dev shell: libseat, libinput, libxkbcommon, Mesa, pixman, udev
-- [ ] P-003 CI: fmt, clippy `-D warnings`, tests, `cargo audit`, `cargo deny`, `reuse lint`, CR-byte check
-- [ ] P-004 Release flags noted in the build config, applied and disabled alike (§3.2)
-- [ ] P-005 Command line `capsule [OPTIONS] [--] <PROGRAM> [ARGS...]`, `--help` and `--version` with the maintainer line
-- [ ] P-006 Exit-code enum and structured errors on stderr; output mode detection (CLI Standard §4–§5)
-- [ ] P-007 Child spawn and exit-status mapping (status, or 128+N on signal), tested without a display
-- [ ] P-008 `SECURITY.md` and `CREDITS.md` (Smithay)
-- [ ] P-009 Assurance category and conformance claim declared in `README.md` and `AGENTS.md` (§19)
-- [ ] P-010 Capsule registered in `PROJECTS.md` and in the Standard's §15.1 subdomain registry
+## Gates
 
-## M1 — Nested in a window
+| Gate | Closes with | Tag |
+|---|---|---|
+| G1 — Requirements | P-001 | `g1-requirements-0.1` |
+| G2 — Design | P-008 | `g2-design-0.1` |
+| G3 — Release | P-042 | `v0.1.0` |
 
-- [ ] P-011 winit backend with the GLES renderer, one output
-- [ ] P-012 Core protocols: `wl_compositor`, `wl_shm`, `linux-dmabuf`, `wl_seat`, `wl_output`, `xdg_shell`
-- [ ] P-013 First toplevel fullscreen; later toplevels centred over it, newest focused
-- [ ] P-014 Popups positioned and constrained to the output
-- [ ] P-015 Keyboard through xkbcommon, keymap from the `XKB_DEFAULT_*` variables
-- [ ] P-016 Pointer and cursor (client cursor surfaces and `cursor-shape`)
-- [ ] P-017 Clipboard (`wl_data_device`) and primary selection
-- [ ] P-018 No decorations: `xdg-decoration` answered server-side, nothing drawn
-- [ ] P-019 Capsule exits with the child's status; the child sees `WAYLAND_DISPLAY`
-- [ ] P-020 Headless integration tests drive a test client through the protocols above
-- [ ] P-021 Alacritty running Nushell works in the nested window, under niri and under LeftWM
+Tags are signed and pushed only on the maintainer's word.
 
-## M2 — Real hardware
+## M0 — Foundation and gates
 
-- [ ] P-022 Seat access through libseat, with seatd and with logind
-- [ ] P-023 GPU discovery through udev; primary GPU chosen
-- [ ] P-024 DRM/KMS output: first connected output, preferred mode
-- [ ] P-025 GBM + GLES rendering on the DRM output
-- [ ] P-026 Software (pixman) fallback when GLES is unavailable, tested with GLES disabled
-- [ ] P-027 Input devices through libinput
-- [ ] P-028 Ctrl+Alt+F*n* switches virtual terminals; devices pause and resume
-- [ ] P-029 Started from greetd on the ThinkPad, Alacritty + Nushell usable
+- [ ] P-001 G1: §20.4 characteristics gate over CPS-SRS-001–105 and the needs; findings in
+      `COMPLIANCE.md` "Gate records / G1"; statuses `draft → baselined`; signed tag
+- [ ] P-002 Posture set: `README.md` (Category B, §19.6 claim, §13 N/A, support window),
+      `SECURITY.md`, `CREDITS.md` (Cage, Smithay, ISO/IEC/IEEE 29148, ECSS-E-ST-40C),
+      `COMPLIANCE.md`; `reuse lint` clean — CPS-SRS-001, 002, 004, 005, 006
+- [ ] P-003 Agent context: `AGENTS.md` (Category B, layout, commands, invariants, forbidden
+      patterns), `CLAUDE.md`, `SKILL.md` (command surface) — CPS-SRS-003, 004
+- [ ] P-004 Registry: `PROJECTS.md` row (Category B, prefix `CPS`) in the Projects repo —
+      CPS-SRS-004
+- [ ] P-005 Workspace skeleton: `Cargo.toml` (crates `capsule-policy`, `capsule`; edition 2024;
+      `rust-version`; release profile with every flag noted, `panic = "abort"`), `clippy.toml`,
+      `rustfmt.toml`, `deny.toml`, `.cargo/audit.toml`, `flake.nix` devShell, `flake.lock` as
+      the toolchain pin
+- [ ] P-006 CI and local gate: `.github/workflows/ci.yml` and `tools/ci.nu` (fmt, clippy
+      `-D warnings`, test, audit, deny, `reuse lint`, CR-byte check) — CPS-SRS-007, 008
+- [ ] P-007 Requirements as data: `doc/requirements.toml`, `tools/srs.nu` rendering
+      `doc/requirements.texi` into the manual, `tools/trace.nu` gating CI — CPS-SRS-009
+- [ ] P-008 G2: manual `Design` node (architecture, the §3.2 serial trade-off, safety and
+      privacy models); reference machine and workload recorded; budgets confirmed; `Interfaces`
+      node drafted; dependencies qualified (Smithay crates.io vs git decided); seatd and logind
+      hand-back evidence; signed tag
 
-## M3 — Hardening and release
+## M1 — Command line and child
 
-- [ ] P-030 Output hotplug: the session moves to a remaining output instead of ending
-- [ ] P-031 Suspend and resume keep the session
-- [ ] P-032 Devices go back to the seat on every exit path, a panic included
-- [ ] P-033 A client protocol error disconnects that client; the compositor keeps running
-- [ ] P-034 No screen-reader modifier chord grabbed (§10.4); §18 tailoring entry recorded
-- [ ] P-035 Budgets declared and measured: start-up time, memory, frame latency (§22)
-- [ ] P-036 The single-threaded event loop documented as the §3.2 trade-off, with a benchmark
-- [ ] P-037 Texinfo manual `doc/capsule.texi`, building to Info, HTML and PDF (§8)
-- [ ] P-038 `packaging/guix.scm`, `packaging/default.nix`, `packaging/PKGBUILD` build (§5.5)
-- [ ] P-039 `CHANGELOG.md` and the v0.1.0 tag
+- [ ] P-009 `capsule-policy`: exit-status mapping and the termination-deadline state machine
+      — CPS-SRS-014, 015
+- [ ] P-010 Argument parsing: program, trailing arguments, `--`, missing program, global
+      flags, `--backend` — CPS-SRS-011, 012, 013, 018, 029
+- [ ] P-011 Backend choice in `capsule-policy` — CPS-SRS-030
+- [ ] P-012 Diagnostics: output-mode cascade, severity tags, JSON error object, UTC
+      timestamps, plain mode — CPS-SRS-024, 025, 026, 028, 078
+- [ ] P-013 Introspection: `--version`, `--help`, `--describe`, `--schema`, `--dry-run`
+      (backend only until M3) — CPS-SRS-019, 020, 021, 022, 023
+- [ ] P-014 Child process: spawn with `PR_SET_PDEATHSIG`, 126/127 detection, `SIGCHLD`
+      reaping, standard output left to the child — CPS-SRS-016, 017, 027
+- [ ] P-015 `--verbose` report — CPS-SRS-031
 
-## M4 — Bravais switch-over
+## M2 — Nested compositor
 
-- [ ] P-040 Capsule added as a Bravais flake input
-- [ ] P-041 `mkShellSession` wraps sessions in `capsule --` instead of `cosmic-comp`
-- [ ] P-042 Brush, Ion, mjsh and Nushell sessions each log in and out cleanly
-- [ ] P-043 Bravais `PRD.md`, `AGENTS.md`, `CHANGELOG.md` updated; seatd note re-checked
+- [ ] P-016 Compositor core: Smithay state, calloop loop, socket, child started after the
+      socket, child environment — CPS-SRS-010, 032, 033, 034
+- [ ] P-017 Closed global list, with a test that reads the registry — CPS-SRS-035
+- [ ] P-018 Placement and focus in `capsule-policy`, wired into `xdg_shell` —
+      CPS-SRS-036, 037, 038, 039
+- [ ] P-019 Popups — CPS-SRS-040
+- [ ] P-020 Seat: keymap and fallback, pointer focus, cursor — CPS-SRS-041, 042, 043, 044
+- [ ] P-021 Clipboard and primary selection — CPS-SRS-045, 046
+- [ ] P-022 Decorations and the canvas-colour background (§11.6 resolution) —
+      CPS-SRS-047, 048
+- [ ] P-023 Robustness: protocol errors, lifetime, termination and its deadline —
+      CPS-SRS-049, 050, 051, 052
+- [ ] P-024 Damage-driven rendering — CPS-SRS-053
+- [ ] P-025 Nested backend: window, resize, close, no device nodes —
+      CPS-SRS-073, 074, 075, 076
+- [ ] P-026 Key delivery: nothing bound except the virtual-terminal chords — CPS-SRS-077
+- [ ] P-027 Integration harness: Capsule driven by a test client in CI; Alacritty + Nushell
+      exercised nested under niri and under LeftWM
 
-## M5 — XWayland: optional
+## M3 — Real hardware
 
-- [ ] P-044 XWayland started on demand behind the `xwayland` Cargo feature (optional)
-- [ ] P-045 An X11-only program runs as the one application (optional)
+- [ ] P-028 Seat session through libseat; the no-seat error — CPS-SRS-054, 055
+- [ ] P-029 GPU and output choice in `capsule-policy` — CPS-SRS-056, 057, 058
+- [ ] P-030 DRM output at the preferred mode, paced to vertical blank — CPS-SRS-059, 072
+- [ ] P-031 Renderers: GLES through GBM and EGL, pixman fallback, no-renderer exit —
+      CPS-SRS-060, 061, 062
+- [ ] P-032 libinput devices at their defaults — CPS-SRS-063, 064
+- [ ] P-033 Virtual-terminal switching, inactive and reactivated sessions —
+      CPS-SRS-065, 066, 067
+- [ ] P-034 Output hotplug and the no-output state — CPS-SRS-068, 069
+- [ ] P-035 Hardware tests (feature `hardware-tests`): suspend and hand-back —
+      CPS-SRS-070, 071
+- [ ] P-036 Greeter smoke test on the ThinkPad: an ad-hoc session entry, Alacritty + Nushell
+      usable for a working session
 
-## M6 — X11 kiosk mode: optional
+## M4 — Budgets and release
 
-- [ ] P-046 x11rb window manager, run as the `xinit` client (optional)
-- [ ] P-047 The program shown fullscreen with focus; later windows centred over it (optional)
-- [ ] P-048 Same command line and exit-status contract as the Wayland mode (optional)
-- [ ] P-049 Tested under Xephyr, then on a machine without KMS (optional)
+- [ ] P-037 Budget harness on the reference machine; release-build measurement and margin
+      report — CPS-SRS-079, 080, 081, 082, 083
+- [ ] P-038 Fuzz targets for every parser in Capsule's own crates, run in CI — CPS-SRS-092
+- [ ] P-039 Coverage gate and the `cargo mutants` triage — CPS-SRS-091, 093
+- [ ] P-040 Manual: user chapters, `Design`, `Interfaces`; Info, HTML, and PDF builds —
+      CPS-SRS-084, 090
+- [ ] P-041 Packaging triad with `install-info` hooks — CPS-SRS-085, 086, 087, 088
+- [ ] P-042 G3: SBOM, release manifest, traceability matrix artifact, `CHANGELOG.md`, signed
+      tag `v0.1.0` — CPS-SRS-089
+
+## M5 — Bravais switch-over
+
+- [ ] P-043 Bravais flake input `capsule`, built from the Nix package
+- [ ] P-044 `mkShellSession` runs `capsule -- alacritty -e <shell>`; cosmic-comp leaves the
+      login path; Bravais `PRD.md`, `AGENTS.md`, `CHANGELOG.md` updated
+- [ ] P-045 Validation of CPS-NEED-001–009 in the greeter, recorded in the release manifest
+
+## M6 — XWayland: optional
+
+- [ ] P-046 `xwayland` feature: on-demand Xwayland, `DISPLAY`, window handling, off by default
+      — CPS-SRS-094, 095, 096, 097 (optional)
+
+## M7 — X11 kiosk mode: optional
+
+- [ ] P-047 `capsule-x11`: window-manager ownership and the display-taken exit —
+      CPS-SRS-098, 099 (optional)
+- [ ] P-048 Placement, focus, no key grabs, and root background through `capsule-policy` —
+      CPS-SRS-100, 101, 102, 104, 105 (optional)
+- [ ] P-049 Exit-status contract and `xinit` use, tested under Xephyr and then on a machine
+      without KMS — CPS-SRS-103, CPS-NEED-010 (optional)
