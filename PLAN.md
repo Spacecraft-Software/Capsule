@@ -71,12 +71,13 @@ Tags are signed and pushed only on the maintainer's word.
 - [ ] P-009 `capsule-policy`: exit-status mapping and the termination-deadline state machine
       — CPS-SRS-014, 015
 - [ ] P-010 Argument parsing: program, trailing arguments, `--`, missing program, global
-      flags, `--backend` — CPS-SRS-011, 012, 013, 018, 029
+      flags, `--backend`, `--quiet` with `--verbose`, a backend not built in —
+      CPS-SRS-011, 012, 013, 018, 029, 106, 108
 - [ ] P-011 Backend choice in `capsule-policy` — CPS-SRS-030
 - [ ] P-012 Diagnostics: output-mode cascade, severity tags, JSON error object, UTC
-      timestamps, plain mode — CPS-SRS-024, 025, 026, 028, 078
+      timestamps, plain mode, `--quiet` — CPS-SRS-024, 025, 026, 028, 078, 107
 - [ ] P-013 Introspection: `--version`, `--help`, `--describe`, `--schema`, `--dry-run`
-      (backend only until M3) — CPS-SRS-019, 020, 021, 022, 023
+      (GPU and output from M3), `--version` as JSON — CPS-SRS-019, 020, 021, 022, 023, 111
 - [ ] P-014 Child process: spawn with `PR_SET_PDEATHSIG`, 126/127 detection, `SIGCHLD`
       reaping, standard output left to the child — CPS-SRS-016, 017, 027
 - [ ] P-015 `--verbose` report — CPS-SRS-031
@@ -84,10 +85,10 @@ Tags are signed and pushed only on the maintainer's word.
 ## M2 — Nested compositor
 
 - [ ] P-016 Compositor core: Smithay state, calloop loop, socket, child started after the
-      socket, child environment — CPS-SRS-010, 032, 033, 034
+      socket, child environment, no configuration read — CPS-SRS-010, 032, 033, 034, 110
 - [ ] P-017 Closed global list, with a test that reads the registry — CPS-SRS-035
-- [ ] P-018 Placement and focus in `capsule-policy`, wired into `xdg_shell` —
-      CPS-SRS-036, 037, 038, 039
+- [ ] P-018 Placement, stacking, and focus in `capsule-policy`, wired into `xdg_shell` —
+      CPS-SRS-036, 037, 038, 039, 109
 - [ ] P-019 Popups — CPS-SRS-040
 - [ ] P-020 Seat: keymap and fallback, pointer focus, cursor — CPS-SRS-041, 042, 043, 044
 - [ ] P-021 Clipboard and primary selection — CPS-SRS-045, 046
@@ -146,7 +147,8 @@ Tags are signed and pushed only on the maintainer's word.
 
 - [ ] P-047 `capsule-x11`: window-manager ownership and the display-taken exit —
       CPS-SRS-098, 099 (optional)
-- [ ] P-048 Placement, focus, no key grabs, and root background through `capsule-policy` —
-      CPS-SRS-100, 101, 102, 104, 105 (optional)
+- [ ] P-048 Placement, stacking, focus, no key grabs, and root background through
+      `capsule-policy` —
+      CPS-SRS-100, 101, 102, 104, 105, 112 (optional)
 - [ ] P-049 Exit-status contract and `xinit` use, tested under Xephyr and then on a machine
       without KMS — CPS-SRS-103, CPS-NEED-010 (optional)

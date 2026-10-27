@@ -25,7 +25,7 @@ ticks only when that test passes. Identifiers are permanent.
 
 - [x] T-001 P-001 Run the §20.4 gate over CPS-SRS-001–105 and CPS-NEED-001–010; record
       findings in `COMPLIANCE.md` "Gate records / G1"
-- [ ] T-002 P-001 Fix every G1 finding in `doc/capsule.texi`, in its own PR
+- [x] T-002 P-001 Fix every G1 finding in `doc/capsule.texi`, in its own PR
 - [ ] T-003 P-001 Flip every status to `baselined` (after T-018); maintainer pushes signed
       tag `g1-requirements-0.1`
 - [x] T-004 P-002 `LICENSE` (GNU's canonical GPL-3.0 text), `LICENSES/` symlink and
@@ -80,17 +80,20 @@ ticks only when that test passes. Identifiers are permanent.
 - [ ] T-026 P-009 `capsule-policy::terminate`: the SIGTERM-then-SIGKILL deadline as a pure
       state machine fed by timestamps
 - [ ] T-027 P-010 clap definition: global flags, `--backend`, `--` handling, trailing
-      arguments passed verbatim; missing-program error with a runnable hint
+      arguments passed verbatim; missing-program error with a runnable hint; exit 2 for
+      `--quiet` with `--verbose` and for a backend not built in
 - [ ] T-028 P-011 `capsule-policy::backend`: auto selection from `WAYLAND_DISPLAY` and
       `DISPLAY`, table-driven tests
 - [ ] T-029 P-012 Output-mode cascade (flag, agent environment, TTY, non-TTY) with
       presence-based detection, tested under the host's real `AI_AGENT` value
 - [ ] T-030 P-012 Diagnostic type: severity tags, JSON error object, `diagnostic` envelope,
-      UTC timestamps; plain mode for `--accessible`, `SPACECRAFT_A11Y`, `NO_COLOR`
-- [ ] T-031 P-013 `--version` and `--help` (text and JSON) with the maintainer line and URL
+      UTC timestamps; plain mode for `--accessible`, `--no-color`, `--color never`,
+      `SPACECRAFT_A11Y`, `NO_COLOR`; the `--quiet` severity floor
+- [ ] T-031 P-013 `--version` and `--help` (text and JSON) with the maintainer line and URL;
+      `maintainer` and `website` keys in the JSON metadata
 - [ ] T-032 P-013 `--describe` manifest and `--schema` (JSON Schema 2020-12, validated in a
       test)
-- [ ] T-033 P-013 `--dry-run` JSON report (backend now, renderer and output from T-055)
+- [ ] T-033 P-013 `--dry-run` JSON report (backend now, GPU and output from T-055)
 - [ ] T-034 P-014 Child spawn with `PR_SET_PDEATHSIG` in `pre_exec`; the safety argument at
       the site; 126 and 127 detection; tests with missing and non-executable programs
 - [ ] T-035 P-014 `SIGCHLD` and termination signals as calloop sources; test that Capsule
@@ -100,13 +103,16 @@ ticks only when that test passes. Identifiers are permanent.
 ## M2 — Nested compositor
 
 - [ ] T-037 P-016 Smithay compositor state and calloop loop; socket in `XDG_RUNTIME_DIR`;
-      child started after the socket listens; missing-runtime-directory error
+      child started after the socket listens; missing-runtime-directory and failed-socket
+      errors; test that no file in a configuration directory is opened
 - [ ] T-038 P-016 Child environment test: only `WAYLAND_DISPLAY` differs from Capsule's own
 - [ ] T-039 P-017 The fourteen globals; a test client lists the registry and compares it to
       the closed set
-- [ ] T-040 P-018 `capsule-policy::layout`: fullscreen first toplevel, centred later ones,
-      stacking order, focus stack; property tests over map and unmap sequences
-- [ ] T-041 P-018 Wire the layout into `xdg_shell` configure and unmap handling
+- [ ] T-040 P-018 `capsule-policy::layout`: parentless toplevels fullscreen, dialogs
+      centred, newest on top, focus stack; property tests over map and unmap sequences,
+      including a splash window mapped before the main one
+- [ ] T-041 P-018 Wire the layout into `xdg_shell` configure, `set_parent`, and unmap
+      handling
 - [ ] T-042 P-019 Popup placement with positioner constraint adjustment, tested at each edge
 - [ ] T-043 P-020 Keymap from `XKB_DEFAULT_*`; fallback with `[WARN]` on a keymap that does
       not compile
@@ -131,8 +137,9 @@ ticks only when that test passes. Identifiers are permanent.
 - [ ] T-053 P-028 libseat session (seatd and logind); exit 4 with a hint when none opens
 - [ ] T-054 P-029 `capsule-policy::output`: boot-VGA GPU, internal panel first, lowest
       connector otherwise; tests from recorded udev and connector fixtures
-- [ ] T-055 P-030 DRM output at the preferred mode; vblank-paced frames; `--dry-run` and
-      `--verbose` report the real renderer and output
+- [ ] T-055 P-030 DRM output at the preferred mode (first listed when none is preferred);
+      vblank-paced frames; `--dry-run` reports GPU and output from udev and sysfs;
+      `--verbose` reports the real renderer and output
 - [ ] T-056 P-031 GBM + EGL + GLES renderer; pixman fallback with `[WARN]`; exit 1 naming
       both failures; tested with GLES forced off
 - [ ] T-057 P-032 libinput devices at their defaults; TrackPoint middle-button scrolling
@@ -186,7 +193,8 @@ ticks only when that test passes. Identifiers are permanent.
 
 - [ ] T-077 P-047 `capsule-x11` crate behind `x11-kiosk`; `SubstructureRedirect` ownership;
       exit 5 when another window manager holds the display (optional)
-- [ ] T-078 P-048 Map, centre, stack, and focus through `capsule-policy`; no key grabs; root
-      background in the canvas colour (optional)
+- [ ] T-078 P-048 Map, centre, stack, and focus through `capsule-policy`, with
+      `WM_TRANSIENT_FOR` as the parent; no key grabs; root background in the canvas colour
+      (optional)
 - [ ] T-079 P-049 Exit-status contract under `xinit`; tests under Xephyr; validation on a
       machine without KMS (optional)
