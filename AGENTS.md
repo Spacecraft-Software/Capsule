@@ -13,7 +13,8 @@ mode, in the Steelbore OS Bravais greeter's shell sessions
 (`bravais/modules/login/default.nix`, `mkShellSession`).
 
 Status: pre-release, no code yet. There are no build, lint, or test commands
-yet; this file gains them with the Cargo workspace.
+yet; this file gains them with the Cargo workspace. Milestones and progress
+are in [`PLAN.md`](PLAN.md) (Standard §17.5).
 
 ## Scope
 
