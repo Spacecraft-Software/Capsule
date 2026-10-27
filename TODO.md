@@ -23,7 +23,7 @@ ticks only when that test passes. Identifiers are permanent.
 
 ## M0 — Foundation and gates
 
-- [ ] T-001 P-001 Run the §20.4 gate over CPS-SRS-001–105 and CPS-NEED-001–010; record
+- [x] T-001 P-001 Run the §20.4 gate over CPS-SRS-001–105 and CPS-NEED-001–010; record
       findings in `COMPLIANCE.md` "Gate records / G1"
 - [ ] T-002 P-001 Fix every G1 finding in `doc/capsule.texi`, in its own PR
 - [ ] T-003 P-001 Flip every status to `baselined` (after T-018); maintainer pushes signed
