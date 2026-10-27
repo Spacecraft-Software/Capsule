@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Mohamed Hammad <Mohamed.Hammad@SpacecraftSoftware.org>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Archived chat transcripts written by `engram save-chat`; kept local.
+chat/
+
+# Per-user Claude Code permissions; personal, never shared (§5.7).
+.claude/settings.local.json
+
+# Cargo build output.
+/target/
