@@ -69,8 +69,42 @@ requirements CPS-SRS-106–112 (112 optional); terms *parent*, *dialog*, *intern
 `zwp_linux_dmabuf_v1` cannot be advertised under the CPS-SRS-061 fallback, and CPS-SRS-035
 needs a conditional form.
 
-**Before baselining:** a second pass by a reader that has not seen this session, prompted
-from the requirement text alone (§21.4), recorded here.
+**Characteristics gate, second pass: 2026-10-27** (§21.4, "a different reader decides").
+Reviewer: a fresh Claude Code agent with no access to this session, prompted from the
+requirement text and Standard §20–§21.1 alone, told not to read `PRD.md`, `PLAN.md`, `TODO.md`,
+this file, or git history. It disclosed that the harness also loaded `AGENTS.md` and `CLAUDE.md`
+into its context, and that it did not rely on them. Result: **18 findings plus one note; the
+gate is not passed.** Triage by the author. The reviewer's three technical claims that change
+the design were checked before acceptance (R-04, R-07, R-11).
+
+| # | Requirement | Characteristic | Finding | Triage |
+|---|-------------|----------------|---------|--------|
+| R-01 | 010, 032–053, 060–072, 102 | Unambiguous, Feasible | Requirements carry no backend scope, so Wayland-socket obligations bind the X11 kiosk mode, where they are infeasible; 071 is meaningless when nested; 102 lacks its mode condition | Accept: a normative applicability sentence per section, explicit conditions where a section mixes modes |
+| R-02 | 029, 098; NEED-010 | Consistent | `--backend` values exclude `x11` though 098 uses it; `auto` never picks it; NEED-010 says "the same command" | Accept: `x11` back in 029's values (108 covers a build without it); NEED-010 reworded to the same session through `xinit` |
+| R-03 | 071 | Feasible, Correct | After `SIGKILL`, Capsule cannot act; the seat manager restores the VT | Accept: split into Capsule restoring the VT on every path it can catch, and a `will` statement about the seat manager, evidenced by a system test |
+| R-04 | 057, 068, 069 | Correct, Complete | A closed lid usually leaves eDP connected, so "internal panel first" keeps the session on a dark panel beside a live external monitor | Accept (checked): lid state from the libinput switch device enters output choice |
+| R-05 | 056–058, 068 | Unambiguous | Outputs on which GPU, which connector identifier, two internal panels, which output after removal; `boot_vga` is a sysfs attribute | Accept: outputs on the chosen GPU only; order by connector name; 068 reapplies 057/058 |
+| R-06 | 079–082 | Feasible, Verifiable | DRM budgets cannot run on CI runners; 081 names no measurement points | Accept: measured on the reference machine as a release-gate procedure; 081 names its two points |
+| R-07 | NEED-006, 035, 094–105 | Consistent, Correct | X11 clients can capture and inject through `GetImage` and XTEST, so NEED-006 cannot hold under the X modes; 035 omits `xwayland_shell_v1` | Accept (checked): NEED-006 scoped to Wayland clients and the X limit stated; 035 admits `xwayland_shell_v1` under `--xwayland` |
+| R-08 | 034 | Correct | Under the nested backend the child inherits the host's `DISPLAY`, so an X11 fallback reaches the host desktop | Accept: under the nested backend Capsule removes `DISPLAY` unless `--xwayland` sets its own |
+| R-09 | set | Complete | Missing: nested host unreachable, seat never active, GPU lost, seat manager gone, Capsule fatal while the child runs, X display unreachable, `--xwayland` on a build without it | Accept: one requirement each, with an exit status |
+| R-10 | NEED-003, 077 | Able to be validated | A hung child leaves no path back to the greeter except an external signal | Accept: NEED-003 reworded to "reach another virtual terminal, from which the session can be ended"; no emergency chord, which would contradict 077 |
+| R-11 | 110, 041 | Feasible | libxkbcommon's default include path reads `$XDG_CONFIG_HOME/xkb`, `~/.xkb`, and `/etc/xkb` | Accept (checked): 110 states it covers every file the process opens; the design disables xkbcommon's default includes |
+| R-12 | 036, 074 | Complete | Output scale and transform unspecified, so "logical size" has two readings on HiDPI | Accept: scale 1 and normal transform in v0.1 |
+| R-13 | 037, 040, 042, 044 | Complete | Dialog larger than the output; popup that fits no adjustment; "default keymap" undefined; cursor theme missing; no surface under the cursor | Accept: clamp to output; `evdev`/`pc105`/`us`; built-in cursor image; default cursor over the background |
+| R-14 | 019, 021–023 | Complete | No exit status; no JSON shape; GPU and output meaning under nested | Accept: exit 0; shapes in the `Interfaces` node; nested reports the host window |
+| R-15 | 009, 089, 092 | Unambiguous | "Evidence marker", SBOM format and place, and "parser" undefined | Accept: define the marker, CycloneDX JSON attached to the release, list the fuzz targets |
+| R-16 | 018, 024, 026, 033, 055, 099 | Complete | The CLI Standard version is not pinned | Accept: CLI Standard v1.1.0 |
+| R-17 | Terminology | Conforming, Consistent | "Output" carries an obligation; "top-level window" vs "toplevel" | Accept: obligation moved to a requirement; one term |
+| R-18 | 001, 091 | Method | `reuse lint` is executed, so test; coverage is analysis | Reject: §21.1 lists an SPDX header as its example of an inspection property, and coverage is measured from a test run, so the declared methods stand |
+| Note | NEED-005 | Able to be validated | "Rebuilding a desktop never changes the login path" has no requirement | Accept: a requirement that Capsule's package closure holds no desktop-environment package, by inspection |
+
+The reviewer judged sound, unprompted: every global named in 035 exists under that name; the
+exit-code conventions (126, 127, 128+N, so 143 and 137 after 051 and 052); the `XKB_DEFAULT_*`
+and `XCURSOR_*` variables; the pixman fallback on dumb buffers; the idle requirements together.
+
+**Next:** the fixes land in their own PR, new obligations numbered from CPS-SRS-113. The gate
+then needs a third pass over the changed requirements only.
 
 ---
 
