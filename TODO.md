@@ -26,7 +26,7 @@ ticks only when that test passes. Identifiers are permanent.
 - [x] T-001 P-001 Run the §20.4 gate over CPS-SRS-001–105 and CPS-NEED-001–010; record
       findings in `COMPLIANCE.md` "Gate records / G1"
 - [x] T-002 P-001 Fix every G1 finding in `doc/capsule.texi`, in its own PR
-- [ ] T-080 P-001 Fix the accepted second-pass findings (R-01–R-17 and the NEED-005 note),
+- [x] T-080 P-001 Fix the accepted second-pass findings (R-01–R-17 and the NEED-005 note),
       new obligations from CPS-SRS-113, in its own PR
 - [ ] T-081 P-001 Third pass over the changed requirements only, by a fresh reader; record it
 - [ ] T-003 P-001 Flip every status to `baselined` (after T-018); maintainer pushes signed
@@ -118,28 +118,34 @@ ticks only when that test passes. Identifiers are permanent.
       handling
 - [ ] T-042 P-019 Popup placement with positioner constraint adjustment, tested at each edge
 - [ ] T-043 P-020 Keymap from `XKB_DEFAULT_*`; fallback with `[WARN]` on a keymap that does
-      not compile
+      not compile (`evdev`/`pc105`/`us`); xkbcommon default includes disabled, system XKB
+      path added explicitly
 - [ ] T-044 P-020 Pointer focus, client cursors, `cursor-shape`, default cursor from
-      `XCURSOR_THEME` and `XCURSOR_SIZE`
+      `XCURSOR_THEME` and `XCURSOR_SIZE` (`default`, 24); built-in cursor image when no theme
+      loads
 - [ ] T-045 P-021 `wl_data_device` and primary selection between two test clients
 - [ ] T-046 P-022 `xdg-decoration` answered server-side; canvas colour from the §11.6
       resolution, read from `steelbore.toml` at build time, never retyped
 - [ ] T-047 P-023 Protocol-error isolation test with a deliberately broken client
 - [ ] T-048 P-023 Lifetime and termination: child outlives its windows; SIGTERM/SIGINT/SIGHUP
-      forwarded; 5 s deadline then SIGKILL
+      forwarded; 5 s deadline then SIGKILL; fatal-error path ends the child and exits 1
 - [ ] T-049 P-024 Damage tracking; test that an idle session submits no frame
 - [ ] T-050 P-025 winit backend: one window, resize reconfigures the toplevel, close sends
-      SIGTERM, no device node opened (checked through `/proc/self/fd`)
+      SIGTERM, no device node opened (checked through `/proc/self/fd`); exit 1 with a
+      `--backend drm` hint when the host is unreachable; host `DISPLAY` removed from the child
 - [ ] T-051 P-026 Key delivery test: every chord reaches the client, the Orca and NVDA
-      modifier chords included
+      modifier chords included; holding Ctrl+Alt+Backspace 2 s ends the child, a shorter
+      press reaches the client and ends nothing
 - [ ] T-052 P-027 Headless integration harness in CI; Alacritty + Nushell exercised nested
       under niri and under LeftWM, recorded
 
 ## M3 — Real hardware
 
-- [ ] T-053 P-028 libseat session (seatd and logind); exit 4 with a hint when none opens
-- [ ] T-054 P-029 `capsule-policy::output`: boot-VGA GPU, internal panel first, lowest
-      connector otherwise; tests from recorded udev and connector fixtures
+- [ ] T-053 P-028 libseat session (seatd and logind); exit 4 with a hint when none opens;
+      exit 1 after 30 s inactive; seat loss as a fatal error
+- [ ] T-054 P-029 `capsule-policy::output`: `boot_vga` GPU, internal panel first unless the
+      lid is closed beside another output, lowest
+      connector name otherwise; tests from recorded sysfs, udev, and lid fixtures
 - [ ] T-055 P-030 DRM output at the preferred mode (first listed when none is preferred);
       vblank-paced frames; `--dry-run` reports GPU and output from udev and sysfs;
       `--verbose` reports the real renderer and output
@@ -149,19 +155,21 @@ ticks only when that test passes. Identifiers are permanent.
       checked on the ThinkPad
 - [ ] T-058 P-033 Ctrl+Alt+F1–F12; no input and no frames while inactive; frame within 1 s of
       reactivation
-- [ ] T-059 P-034 Output removal moves the session within 2 s; no-output state keeps the
+- [ ] T-059 P-034 Output choice re-run on hotplug and lid events within 2 s; GPU removal as a
+      fatal error; no-output state keeps the
       child; resume on connect
 - [ ] T-060 P-035 `hardware-tests` feature: suspend/resume and hand-back after panic and
-      SIGKILL, each recorded with date and machine
+      SIGKILL (the A-01 system test), each recorded with date and machine
 - [ ] T-061 P-036 Ad-hoc greeter session entry on the ThinkPad; a working session in
       Alacritty + Nushell, recorded
 
 ## M4 — Budgets and release
 
 - [ ] T-062 P-037 Budget harness: hyperfine start-up, peak RSS, key-to-client latency probe,
-      idle CPU, stripped size; run on release builds; `BUDGET:` margin lines in the report
+      idle CPU, stripped size; run on the reference machine for each release build;
+      nested-backend figures tracked in CI; `BUDGET:` margin lines in the report
 - [ ] T-063 P-038 `cargo fuzz` targets for the argument parser, backend choice, output
-      choice, layout, and keymap-variable parsing; CI runs each for a fixed time
+      choice, layout, and keymap-variable parsing; CI runs each for 60 s on every merge
 - [ ] T-064 P-039 `cargo llvm-cov` gate at 80% line coverage of Capsule's own crates
 - [ ] T-065 P-039 `cargo mutants` run; each survivor killed or justified in
       `COMPLIANCE.md` "Gate records / G3"
@@ -170,8 +178,10 @@ ticks only when that test passes. Identifiers are permanent.
 - [ ] T-067 P-040 `Interfaces` node completed and baselined; Info, HTML (`spacecraft.css`),
       and A4 PDF builds in CI with no warning
 - [ ] T-068 P-041 `packaging/default.nix`, `packaging/guix.scm`, `packaging/PKGBUILD` with
-      version, SHA-256, and `install-info` hooks; each built in a clean environment
-- [ ] T-069 P-042 CycloneDX SBOM from the lockfile with a checksum, in the release CI run
+      version, SHA-256, and `install-info` hooks; each built in a clean environment; Nix
+      closure checked free of COSMIC, GNOME, Plasma, and niri packages
+- [ ] T-069 P-042 CycloneDX JSON SBOM from the lockfile, attached with its SHA-256 to the
+      GitHub release by the release CI run
 - [ ] T-070 P-042 Release manifest: identity, artifacts and checksums, provenance, V&V
       summary, budgets with margins, known issues, conformance claim; traceability matrix
       attached
