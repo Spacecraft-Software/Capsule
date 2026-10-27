@@ -12,8 +12,25 @@ replaces [Cage](https://github.com/cage-kiosk/cage), and cosmic-comp's kiosk
 mode, in the Steelbore OS Bravais greeter's shell sessions
 (`bravais/modules/login/default.nix`, `mkShellSession`).
 
+**Assurance: Category B** (Standard §19). A compositor crash ends every
+program in the session and loses unsaved work. Tailoring is in
+`COMPLIANCE.md`.
+
 Status: pre-release, no code yet. There are no build, lint, or test commands
 yet; this file gains them with the Cargo workspace.
+
+## Where to look
+
+| File | Holds |
+|---|---|
+| `doc/capsule.texi` | Needs (`CPS-NEED-nnn`) and requirements (`CPS-SRS-nnn`), the authority on what Capsule shall do |
+| `PRD.md` | Decisions, architecture, interfaces, open G2 items, requirements by milestone |
+| `PLAN.md`, `TODO.md` | Work packages (`P-nnn`) and tasks (`T-nnn`); tick items in the PR that completes them |
+| `COMPLIANCE.md` | Tailoring register and gate records |
+
+Never change a requirement's text from code work; change it in its own PR.
+Mark evidence in code with `Verifies: CPS-SRS-nnn` on tests and
+`Implements: CPS-SRS-nnn` on the implementing item.
 
 ## Scope
 
@@ -21,7 +38,8 @@ In scope:
 
 - DRM/KMS output, libinput input, and seat access through libseat (seatd or
   logind). OpenGL ES rendering, with a software (pixman) fallback.
-- One fullscreen `xdg_toplevel` on one output, plus its popups.
+- One output at a time. The first `xdg_toplevel` is fullscreen; later ones
+  (dialogs) are centred above it, newest focused; popups are kept on screen.
 - Keyboard and pointer focus, the clipboard (`wl_data_device`), and the
   primary selection (Alacritty uses both).
 - Ctrl+Alt+F*n* virtual-terminal switching.
@@ -55,7 +73,12 @@ an X11 case. The Wayland mode falls back to Smithay's software renderer
 name belongs to the child. `--` ends Capsule's own options, so a child whose
 name starts with `-` cannot be mistaken for a Capsule flag. Capsule's exit
 status is the child's. A child killed by signal *N* gives 128+*N*. Capsule's
-own failures use the CLI Standard exit codes.
+own failures use the CLI Standard exit codes and always write an error object
+to stderr, which is how a caller tells them from a child's status.
+
+Introspection is by flag, never by sub-command: `--describe`, `--schema`,
+`--dry-run`. A sub-command would shadow a program with the same name
+(tailored in `COMPLIANCE.md`). Do not add sub-commands.
 
 ## Invariants
 
