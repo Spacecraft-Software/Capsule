@@ -125,7 +125,7 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 
 | Interface | Shape |
 |-----------|-------|
-| Command line | `capsule [OPTIONS] [--] <PROGRAM> [ARGS...]`; `--backend auto\|drm\|nested\|x11`; `--describe`, `--schema`, `--dry-run`; every CLI Standard §3 global flag; `--xwayland` (M6) |
+| Command line | `capsule [OPTIONS] [--] <PROGRAM> [ARGS...]`; `--backend auto\|drm\|nested` (plus `x11` when built with `x11-kiosk`); `--describe`, `--schema`, `--dry-run`; every CLI Standard §3 global flag; `--xwayland` (M6) |
 | Exit status | Child's status, or 128+N on signal; Capsule's own: 1, 2, 4, 5, 126, 127 with an error object on stderr |
 | Diagnostics | stderr only; `[ERROR]`/`[WARN]`/`[OK]`/`[INFO]` in human mode; CLI Standard JSON error and `diagnostic` envelopes in machine mode |
 | Environment read | `XDG_RUNTIME_DIR`, `WAYLAND_DISPLAY`, `DISPLAY`, `XKB_DEFAULT_*`, `XCURSOR_THEME`, `XCURSOR_SIZE`, `AI_AGENT`, `AGENT`, `CI`, `NO_COLOR`, `SPACECRAFT_A11Y`, `SPACECRAFT_THEME` |
@@ -154,8 +154,11 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
   (CPS-SRS-071), and record the evidence.
 - x11rb: align the M7 version with the one Smithay's `xwayland` feature pulls, so the tree holds
   one copy.
-- Register `Capsule.SpacecraftSoftware.org` in Standard §15.1 with the next Standard release, and
-  add the `PROJECTS.md` row (CPS-SRS-004).
+- Whether Smithay's software renderer can import dmabufs. If it cannot, `zwp_linux_dmabuf_v1`
+  cannot be advertised under the software fallback and CPS-SRS-035 needs a conditional form
+  (carried from G1, finding record in `COMPLIANCE.md`).
+- Register `Capsule.SpacecraftSoftware.org` in Standard §15.1 with the next Standard release.
+  The `PROJECTS.md` row landed 2026-10-27 (Projects #17), without a subdomain.
 
 
 ## M0 — Foundation and gates
@@ -195,6 +198,10 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-030 Automatic backend
 - [ ] CPS-SRS-031 Verbose report
 - [ ] CPS-SRS-078 Plain diagnostics
+- [ ] CPS-SRS-106 Quiet and verbose together
+- [ ] CPS-SRS-107 Quiet
+- [ ] CPS-SRS-108 Backend not built
+- [ ] CPS-SRS-111 Version as JSON
 
 
 ## M2 — Nested compositor
@@ -204,8 +211,8 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-033 Missing runtime directory
 - [ ] CPS-SRS-034 Child environment
 - [ ] CPS-SRS-035 Advertised globals
-- [ ] CPS-SRS-036 First toplevel fullscreen
-- [ ] CPS-SRS-037 Later toplevels
+- [ ] CPS-SRS-036 Toplevels fullscreen
+- [ ] CPS-SRS-037 Dialogs centred
 - [ ] CPS-SRS-038 Focus newest
 - [ ] CPS-SRS-039 Focus return
 - [ ] CPS-SRS-040 Popups
@@ -222,6 +229,8 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-051 Termination
 - [ ] CPS-SRS-052 Termination deadline
 - [ ] CPS-SRS-053 Idle
+- [ ] CPS-SRS-109 Stacking
+- [ ] CPS-SRS-110 No configuration
 - [ ] CPS-SRS-073 Window
 - [ ] CPS-SRS-074 Window resized
 - [ ] CPS-SRS-075 Window closed
@@ -300,12 +309,13 @@ release manifest.
 
 - [ ] CPS-SRS-098 Window manager (optional)
 - [ ] CPS-SRS-099 Display taken (optional)
-- [ ] CPS-SRS-100 First window fullscreen (optional)
-- [ ] CPS-SRS-101 Later windows (optional)
+- [ ] CPS-SRS-100 X11 windows fullscreen (optional)
+- [ ] CPS-SRS-101 X11 dialogs centred (optional)
 - [ ] CPS-SRS-102 X11 focus (optional)
 - [ ] CPS-SRS-103 X11 exit status (optional)
 - [ ] CPS-SRS-104 X11 key bindings (optional)
 - [ ] CPS-SRS-105 X11 background (optional)
+- [ ] CPS-SRS-112 X11 stacking (optional)
 - [ ] CPS-NEED-010 Machines without kernel mode setting (optional)
 
 ---

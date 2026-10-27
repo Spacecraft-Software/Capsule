@@ -60,6 +60,11 @@ enable (the kernel and seat manager complete it), which is acceptable because th
 test of Capsule's own exit paths; reworded in T-002 so the sentence reads that way. The budget
 figures (CPS-SRS-079–083) stay provisional and are confirmed at G2, not G1.
 
+**Fixes: 2026-10-27** (T-002). All 13 findings resolved as the table states. New
+requirements CPS-SRS-106–112 (112 optional); terms *parent*, *dialog*, *internal panel*,
+*introspection flag*, and *configuration directory* added to Terminology. The set now holds
+112 requirements, 99 of them required.
+
 **Carried to G2:** whether Smithay's software renderer can import dmabufs. If it cannot,
 `zwp_linux_dmabuf_v1` cannot be advertised under the CPS-SRS-061 fallback, and CPS-SRS-035
 needs a conditional form.
