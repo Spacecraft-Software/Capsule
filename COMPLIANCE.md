@@ -120,7 +120,14 @@ and `XCURSOR_*` variables; the pixman fallback on dumb buffers; the idle require
 - Terminology: *connector name*, *lid closed*, *CLI Standard* (pinned to v1.1.0), *evidence
   marker*, *parser*; "top-level window" replaced by *toplevel*.
 
-The set now holds 127 requirements, 112 of them required. **Next:** a third pass over the
+**Maintainer decision, 2026-10-27, superseding the R-10 triage.** Asked to choose, the
+maintainer chose an escape chord over "use another console": holding Ctrl+Alt+Backspace for
+2 s ends the program and returns to the greeter (new CPS-SRS-128), and NEED-003 says the
+session can be ended from its own keyboard. The chord's keys still reach the program, so
+CPS-SRS-077 and §10.4 stand. The maintainer declined automatic hang detection; it is out of
+scope in `PRD.md`.
+
+The set now holds 128 requirements, 113 of them required. **Next:** a third pass over the
 changed requirements only, by a fresh reader (T-081).
 
 ---

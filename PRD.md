@@ -64,7 +64,8 @@ Settled with the maintainer on 2026-10-27 unless marked otherwise.
 | Privacy | Exactly fourteen protocol globals, plus `xwayland_shell_v1` under `--xwayland` (CPS-SRS-035). No screen capture, input injection, layer shell, or virtual keyboard for Wayland clients, ever. X11 clients under XWayland or the X11 kiosk mode can capture and inject through the X server; that limit is accepted for those optional modes (CPS-NEED-006) |
 | Scope per backend | Every requirement section states the backends it applies under (G1 second pass, R-01) |
 | Output choice | Outputs on the chosen GPU only (no hybrid-GPU spanning). Internal panel first unless the lid is closed beside another output; otherwise the lowest connector name; re-run on every hotplug and lid event (CPS-SRS-057, 058, 068). Scale 1, normal transform (CPS-SRS-122, 123) |
-| Keys | Capsule binds nothing but Ctrl+Alt+F1–F12 under DRM (CPS-SRS-077), so no screen-reader chord is taken (§10.4) |
+| Keys | Capsule takes nothing but Ctrl+Alt+F1–F12 under DRM (CPS-SRS-077), so no screen-reader chord is taken (§10.4) |
+| Escape from a frozen program | Hold **Ctrl+Alt+Backspace for 2 s**: SIGTERM to the program, SIGKILL 5 s later, greeter returns (CPS-SRS-128). The keys still reach the program until the 2 s mark. Chosen by the maintainer 2026-10-27 over a double press and over "use another console"; the cost is that holding Emacs's `C-M-DEL` for 2 s ends the session. No automatic hang detection |
 | Palette | Steelbore Modern; the background is the resolved canvas colour (CPS-SRS-048) |
 | Category | **B** — a compositor crash kills every program in the session and loses unsaved work (§19.1). Texinfo SRS, CI traceability, budgets, ICD, baselines |
 | Reference machine | The maintainer's ThinkPad: Intel Core i7-8665U, 4C/8T, UHD Graphics 620, Bravais. Memory and storage class recorded at G2 |
@@ -147,6 +148,8 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 
 - More than one output at a time, tiling, workspaces, panels, a configuration file, IPC, plugins.
 - Screen capture, session lock, layer shell, virtual keyboards, input methods.
+- Automatic hang detection: Capsule never ends a session on its own because a program stopped
+  answering pings (decided 2026-10-27); a busy program is never killed by mistake.
 - Touchscreens, tablets, and fractional scaling (v0.1; revisited only on a stated need).
 - Running an X window manager such as LeftWM under Capsule.
 - An MCP server.
@@ -254,6 +257,7 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-075 Window closed
 - [ ] CPS-SRS-076 No devices
 - [ ] CPS-SRS-077 No key bindings
+- [ ] CPS-SRS-128 Escape chord
 
 
 ## M3 — Real hardware

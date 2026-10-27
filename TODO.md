@@ -134,7 +134,8 @@ ticks only when that test passes. Identifiers are permanent.
       SIGTERM, no device node opened (checked through `/proc/self/fd`); exit 1 with a
       `--backend drm` hint when the host is unreachable; host `DISPLAY` removed from the child
 - [ ] T-051 P-026 Key delivery test: every chord reaches the client, the Orca and NVDA
-      modifier chords included
+      modifier chords included; holding Ctrl+Alt+Backspace 2 s ends the child, a shorter
+      press reaches the client and ends nothing
 - [ ] T-052 P-027 Headless integration harness in CI; Alacritty + Nushell exercised nested
       under niri and under LeftWM, recorded
 

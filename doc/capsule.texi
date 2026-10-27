@@ -101,6 +101,9 @@ The kernel's name for a display connector, such as @samp{eDP-1} or
 @file{/sys/class/drm} entry.  Connector names are ordered by byte value.
 @item lid closed
 The state reported by a libinput lid-switch device while the lid is shut.
+@item escape chord
+Left or right Control, left or right Alt, and Backspace, all held down
+together, with no other key held.
 @item seat session
 Capsule's access to a seat's display and input devices, granted by the seat
 manager (seatd or systemd-logind) through libseat.
@@ -160,8 +163,9 @@ session reports how the program ended.
 @item CPS-NEED-003 @emph{Never stranded}
 A crash, a misbehaving client, or a missing device never leaves the seat
 without a working display and keyboard.  The user can always switch to
-another virtual terminal and back, and from another virtual terminal can
-always end the session and get back to the greeter.
+another virtual terminal and back, and can always end a session whose
+program has stopped responding and get back to the greeter, from the
+session's own keyboard.
 
 @item CPS-NEED-004 @emph{Works on the maintainer's hardware}
 The session works on the Bravais machines, including a machine without a
@@ -221,7 +225,7 @@ under that backend or mode alone.
 * Session and protocols::       CPS-SRS-032 to 053, 109, 113, 117, 122 to 126.
 * DRM backend::                 CPS-SRS-054 to 072, 116, 118, 119.
 * Nested backend::              CPS-SRS-073 to 076, 115.
-* Keys and accessibility::      CPS-SRS-077 to 078.
+* Keys and accessibility::      CPS-SRS-077, 078, 128.
 * Budgets::                     CPS-SRS-079 to 083.
 * Release::                     CPS-SRS-084 to 093, 127.
 * XWayland::                    CPS-SRS-094 to 097, optional.
@@ -991,8 +995,17 @@ Capsule shall deliver every key combination to the focused client, except
 Ctrl+Alt+F1 to F12 under the DRM backend.
 
 Rationale: no screen-reader chord and no program shortcut is ever taken.
-Source: CPS-NEED-005; CPS-NEED-008; Standard §10.4. Method: test.
-Priority: mandatory. Status: draft.
+The escape chord (CPS-SRS-128) is delivered too; it only adds an action
+once held. Source: CPS-NEED-005; CPS-NEED-008; Standard §10.4. Method:
+test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-128 @emph{Escape chord}
+Under the DRM and nested backends, when the escape chord has been held for
+2 s, Capsule shall send @code{SIGTERM} to the child and apply CPS-SRS-052.
+
+Rationale: a frozen program can be ended from its own keyboard, without a
+second login. Source: CPS-NEED-003. Method: test. Priority: mandatory.
+Status: draft.
 
 @item CPS-SRS-078 @emph{Plain diagnostics}
 When @option{--accessible}, @option{--no-color}, or @option{--color never}

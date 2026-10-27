@@ -102,7 +102,8 @@ Tags are signed and pushed only on the maintainer's word.
 - [ ] P-024 Damage-driven rendering — CPS-SRS-053
 - [ ] P-025 Nested backend: window, resize, close, no device nodes, host unreachable —
       CPS-SRS-073, 074, 075, 076, 115
-- [ ] P-026 Key delivery: nothing bound except the virtual-terminal chords — CPS-SRS-077
+- [ ] P-026 Key delivery: nothing taken except the virtual-terminal chords; the 2 s escape
+      chord — CPS-SRS-077, 128
 - [ ] P-027 Integration harness: Capsule driven by a test client in CI; Alacritty + Nushell
       exercised nested under niri and under LeftWM
 
