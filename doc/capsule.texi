@@ -94,8 +94,13 @@ One of @option{--version}, @option{--help}, @option{--describe},
 directory named in @env{XDG_CONFIG_DIRS} (or @file{/etc/xdg} when it is
 unset).
 @item output
-The display Capsule shows its toplevels on.  Capsule drives exactly one
-output at a time.
+A display Capsule can show its toplevels on.
+@item connector name
+The kernel's name for a display connector, such as @samp{eDP-1} or
+@samp{HDMI-A-1}: the part after @samp{card@var{n}-} in the connector's
+@file{/sys/class/drm} entry.  Connector names are ordered by byte value.
+@item lid closed
+The state reported by a libinput lid-switch device while the lid is shut.
 @item seat session
 Capsule's access to a seat's display and input devices, granted by the seat
 manager (seatd or systemd-logind) through libseat.
@@ -111,9 +116,20 @@ instead of a Wayland compositor.
 @item active
 The seat session is @dfn{active} while its virtual terminal is the one in
 the foreground.
+@item CLI Standard
+The Spacecraft Software Dual-Mode Self-Documenting CLI Standard, version
+1.1.0.  Every citation of it in this manual means that version.
 @item machine mode
 The output mode in which Capsule writes diagnostics as JSON, selected by the
-Spacecraft Software CLI Standard §5 cascade.
+CLI Standard §5 cascade.
+@item evidence marker
+A comment @samp{Verifies: CPS-SRS-@var{nnn}} on a test, or
+@samp{Implements: CPS-SRS-@var{nnn}} on the item that implements a
+requirement.
+@item parser
+Code in Capsule's own crates that turns bytes or text from outside the
+process into structured values: the command line, environment variables,
+and the sysfs and udev attributes read to choose a GPU and an output.
 @item agent environment
 A process environment in which @env{AI_AGENT} or @env{AGENT} is set to a
 non-empty value, or @env{CI} is set to a value other than @samp{0} or
@@ -144,7 +160,8 @@ session reports how the program ended.
 @item CPS-NEED-003 @emph{Never stranded}
 A crash, a misbehaving client, or a missing device never leaves the seat
 without a working display and keyboard.  The user can always switch to
-another virtual terminal and back, and can always get back to the greeter.
+another virtual terminal and back, and from another virtual terminal can
+always end the session and get back to the greeter.
 
 @item CPS-NEED-004 @emph{Works on the maintainer's hardware}
 The session works on the Bravais machines, including a machine without a
@@ -157,8 +174,10 @@ configuration leak into it, and rebuilding a desktop never rebuilds or
 changes the login path.
 
 @item CPS-NEED-006 @emph{Private by default}
-No program in the session can capture the screen or inject input into
-another program through the compositor.
+No Wayland client in the session can capture the screen or inject input
+into another program through the compositor.  Under the optional XWayland
+and X11 kiosk modes, X11 clients can do both through the X server; that
+limit is accepted for those modes.
 
 @item CPS-NEED-007 @emph{Operable by people and agents}
 Capsule is started, inspected, and diagnosed from the command line by a
@@ -174,8 +193,9 @@ Capsule can be run and tested inside the maintainer's existing desktop
 session, under Wayland or X11, without logging out.
 
 @item CPS-NEED-010 @emph{Machines without kernel mode setting (optional)}
-On a machine where only an X server can drive the display, the same command
-gives the same one-program session.
+On a machine where only an X server can drive the display, Capsule started
+with @option{--backend x11} as the @command{xinit} client gives the same
+one-program session.
 @end table
 
 Constraints the maintainer will not trade away: one program at a time, never
@@ -191,17 +211,21 @@ Every requirement uses the §20.6 sentence pattern and carries the five
 inspection, and review of design.  Budgets in @ref{Budgets} are provisional
 until gate G2.
 
+@strong{Scope.} Each section opens by stating the backends its requirements
+apply under.  A requirement whose own text names a backend or mode applies
+under that backend or mode alone.
+
 @menu
 * Foundation::                  CPS-SRS-001 to 009.
-* Command line::                CPS-SRS-010 to 031, 106 to 108, 110, 111.
-* Session and protocols::       CPS-SRS-032 to 053, 109.
-* DRM backend::                 CPS-SRS-054 to 072.
-* Nested backend::              CPS-SRS-073 to 076.
+* Command line::                CPS-SRS-010 to 031, 106 to 108, 110, 111, 121.
+* Session and protocols::       CPS-SRS-032 to 053, 109, 113, 117, 122 to 126.
+* DRM backend::                 CPS-SRS-054 to 072, 116, 118, 119.
+* Nested backend::              CPS-SRS-073 to 076, 115.
 * Keys and accessibility::      CPS-SRS-077 to 078.
 * Budgets::                     CPS-SRS-079 to 083.
-* Release::                     CPS-SRS-084 to 093.
+* Release::                     CPS-SRS-084 to 093, 127.
 * XWayland::                    CPS-SRS-094 to 097, optional.
-* X11 kiosk mode::              CPS-SRS-098 to 105, 112, optional.
+* X11 kiosk mode::              CPS-SRS-098 to 105, 112, 114, 120, optional.
 @end menu
 
 @node Foundation
@@ -281,10 +305,14 @@ test. Priority: mandatory. Status: draft.
 @node Command line
 @section Command line
 
+These requirements apply under every backend and mode.
+
 @table @asis
 @item CPS-SRS-010 @emph{Start the program}
 When the command line names a program, Capsule shall start that program as
-its child once its Wayland socket is listening.
+its child once it can show the child's toplevels: under the Wayland backends
+once its Wayland socket is listening, and in X11 kiosk mode once it manages
+the display.
 
 Rationale: running one program is the whole purpose. Source: CPS-NEED-001.
 Method: test. Priority: mandatory. Status: draft.
@@ -313,14 +341,14 @@ Standard §4; CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-014 @emph{Exit status}
 When the child exits normally, Capsule shall exit with the child's exit
-status.
+status, except as CPS-SRS-117 provides.
 
 Rationale: the greeter reports how the session's program ended.
 Source: CPS-NEED-002. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-015 @emph{Signal exit}
 When the child is terminated by signal @var{n}, Capsule shall exit with
-status 128 + @var{n}.
+status 128 + @var{n}, except as CPS-SRS-117 provides.
 
 Rationale: the shell convention lets a caller tell a crash from an exit.
 Source: CPS-NEED-002; CLI Standard §4. Method: test. Priority: mandatory.
@@ -348,9 +376,9 @@ whose effect matters to Capsule carry their own requirements. Source: CLI
 Standard §3. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-019 @emph{Describe}
-When given @option{--describe}, Capsule shall write its capability manifest
-to standard output and exit with status 0 without opening a display or a
-seat session.
+When given @option{--describe}, Capsule shall write its capability manifest,
+a JSON document whose schema the @code{Interfaces} node records, to standard
+output and exit with status 0 without opening a display or a seat session.
 
 Rationale: an agent learns the tool from the tool. Source: CLI Standard
 rule 4; CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
@@ -366,8 +394,10 @@ Status: draft.
 
 @item CPS-SRS-021 @emph{Dry run}
 When given @option{--dry-run}, Capsule shall write the backend, GPU, and
-output it would select as a JSON document to standard output and exit
-without starting the child or opening a seat session.
+output it would select, as a JSON document whose schema the
+@code{Interfaces} node records, to standard output and exit with status 0
+without starting the child or opening a seat session.  Under the nested
+backend the output is the host window and no GPU is reported.
 
 Rationale: the plan can be checked without taking the seat. Source: CLI
 Standard §3; CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
@@ -375,14 +405,15 @@ Standard §3; CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
 @item CPS-SRS-022 @emph{Version}
 When given @option{--version}, Capsule shall write its version, the line
 @samp{Maintained by Mohamed Hammad <Mohamed.Hammad@@SpacecraftSoftware.org>},
-and the project URL.
+and the project URL to standard output, and exit with status 0.
 
 Rationale: attribution in every output surface. Source: Standard §15; CLI
 Standard §3. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-023 @emph{Help}
 When given @option{--help}, Capsule shall write at least two example
-invocations and a footer naming the project URL and the maintainer.
+invocations and a footer naming the project URL and the maintainer to
+standard output, and exit with status 0.
 
 Rationale: help teaches by example. Source: CLI Standard §3. Method: test.
 Priority: mandatory. Status: draft.
@@ -429,10 +460,11 @@ Rationale: one unambiguous time format in logs and JSON. Source: Standard
 
 @item CPS-SRS-029 @emph{Backend flag}
 Capsule shall accept @option{--backend} with the values @samp{auto},
-@samp{drm}, and @samp{nested}, defaulting to @samp{auto}.
+@samp{drm}, @samp{nested}, and @samp{x11}, defaulting to @samp{auto}.
 
-Rationale: the operator can force a backend when detection is wrong.
-Source: CPS-NEED-009. Method: test. Priority: mandatory.
+Rationale: the operator can force a backend when detection is wrong, and
+the optional X11 kiosk mode is reached only by name (CPS-SRS-108 covers a
+build without it). Source: CPS-NEED-009; CPS-NEED-010. Method: test. Priority: mandatory.
 Status: draft.
 
 @item CPS-SRS-030 @emph{Automatic backend}
@@ -474,7 +506,8 @@ silently replaced. Source: CLI Standard §4; CPS-NEED-007. Method: test.
 Priority: mandatory. Status: draft.
 
 @item CPS-SRS-110 @emph{No configuration}
-Capsule shall open no file in a configuration directory.
+The Capsule process shall open no file in a configuration directory, through
+Capsule's own code or through any library it loads.
 
 Rationale: no desktop's configuration or shortcuts reach the session.
 Source: CPS-NEED-005. Method: test. Priority: mandatory. Status: draft.
@@ -486,10 +519,21 @@ envelope whose metadata carries the keys @code{maintainer} and
 
 Rationale: attribution survives in structured output. Source: CLI Standard
 §3; Standard §15. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-121 @emph{XWayland not built}
+When given @option{--xwayland} by a binary built without the @code{xwayland}
+feature, Capsule shall exit with status 2 after writing an error whose hint
+names the feature.
+
+Rationale: a request for an X server that cannot start is reported, never
+ignored. Source: CLI Standard §4; CPS-NEED-007. Method: test. Priority:
+mandatory. Status: draft.
 @end table
 
 @node Session and protocols
 @section Session and protocols
+
+These requirements apply under the DRM and nested backends.
 
 @table @asis
 @item CPS-SRS-032 @emph{Socket}
@@ -510,7 +554,7 @@ Source: CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
 @item CPS-SRS-034 @emph{Child environment}
 Capsule shall start the child with Capsule's own environment plus
 @env{WAYLAND_DISPLAY} naming Capsule's socket, and with no other variable
-added, changed, or removed except as CPS-SRS-095 provides.
+added, changed, or removed except as CPS-SRS-095 and CPS-SRS-113 provide.
 
 Rationale: the session bus and the accessibility bus reach the program
 untouched. Source: CPS-NEED-008. Method: test. Priority: mandatory.
@@ -523,7 +567,8 @@ Capsule shall advertise exactly these globals: @code{wl_compositor},
 @code{zxdg_output_manager_v1}, @code{zwp_linux_dmabuf_v1},
 @code{wp_viewporter}, @code{wp_presentation},
 @code{zwp_primary_selection_device_manager_v1},
-@code{zxdg_decoration_manager_v1}, and @code{wp_cursor_shape_manager_v1}.
+@code{zxdg_decoration_manager_v1}, and @code{wp_cursor_shape_manager_v1},
+together with @code{xwayland_shell_v1} when @option{--xwayland} is given.
 
 Rationale: no screen-capture, input-injection, or layer-shell global exists
 for a client to abuse. Source: CPS-NEED-006. Method: test. Priority:
@@ -537,7 +582,8 @@ Rationale: the program's windows fill the screen, whichever it maps first.
 Source: CPS-NEED-001. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-037 @emph{Dialogs centred}
-Capsule shall show every dialog at its own requested size, centred on the
+Capsule shall show every dialog at its own requested size, reduced in each
+dimension to the output's logical size where it is larger, centred on the
 output.
 
 Rationale: dialogs stay visible and usable without a window manager.
@@ -574,8 +620,8 @@ Priority: mandatory. Status: draft.
 
 @item CPS-SRS-042 @emph{Keymap fallback}
 When those variables name a keymap that cannot be compiled, Capsule shall
-use the default keymap and write a @samp{[WARN]} diagnostic naming the
-variables.
+use the keymap of rules @samp{evdev}, model @samp{pc105}, and layout
+@samp{us}, and write a @samp{[WARN]} diagnostic naming the variables.
 
 Rationale: a typo in a layout never costs the keyboard. Source:
 CPS-NEED-003. Method: test. Priority: mandatory. Status: draft.
@@ -587,8 +633,8 @@ Rationale: the pointer works as the user expects. Source: CPS-NEED-001.
 Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-044 @emph{Cursor}
-When the client under the cursor has set no cursor, Capsule shall draw the
-default cursor of the theme named by @env{XCURSOR_THEME} (@samp{default}
+When no surface is under the cursor, or the client under it has set no
+cursor, Capsule shall draw the default cursor of the theme named by @env{XCURSOR_THEME} (@samp{default}
 when unset) at the size named by @env{XCURSOR_SIZE} (24 when unset).
 
 Rationale: the pointer is never invisible. Source: CPS-NEED-001. Method:
@@ -661,10 +707,62 @@ toplevel.
 
 Rationale: a newly opened dialog is never hidden behind the program.
 Source: CPS-NEED-001. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-113 @emph{Host display removed}
+Under the nested backend without @option{--xwayland}, Capsule shall remove
+@env{DISPLAY} from the child's environment.
+
+Rationale: an X11 fallback in the program never reaches the host desktop.
+Source: CPS-NEED-005; CPS-NEED-006. Method: test. Priority: mandatory.
+Status: draft.
+
+@item CPS-SRS-117 @emph{Fatal error}
+When Capsule meets an error it cannot recover from while the child runs, it
+shall send @code{SIGTERM} to the child, apply CPS-SRS-052, and exit with
+status 1 once the child has exited.
+
+Rationale: a failing compositor ends the session cleanly instead of
+orphaning the program. Source: CPS-NEED-003. Method: test. Priority:
+mandatory. Status: draft.
+
+@item CPS-SRS-122 @emph{Scale}
+Capsule shall give the output a scale of 1.
+
+Rationale: one reading of logical size; the program sizes its own text.
+Source: CPS-NEED-001. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-123 @emph{Transform}
+Capsule shall give the output the normal transform.
+
+Rationale: one reading of logical size and orientation. Source:
+CPS-NEED-001. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-124 @emph{Unconstrained popup}
+When no adjustment the positioner allows keeps a popup inside the output,
+Capsule shall place the popup where the positioner asks, unadjusted.
+
+Rationale: the protocol's own rule for a popup that cannot be constrained.
+Source: CPS-NEED-001. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-125 @emph{Built-in cursor}
+When no cursor theme can be loaded, Capsule shall draw a cursor image built
+into the binary.
+
+Rationale: a bare greeter environment may have no cursor theme installed.
+Source: CPS-NEED-003. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-126 @emph{One output}
+Capsule shall show toplevels on one output at a time.
+
+Rationale: a kiosk session has one screen; mirroring and spanning are out of
+scope. Source: CPS-NEED-001. Method: test. Priority: mandatory.
+Status: draft.
 @end table
 
 @node DRM backend
 @section DRM backend
+
+These requirements apply under the DRM backend.
 
 @table @asis
 @item CPS-SRS-054 @emph{Seat session}
@@ -683,21 +781,25 @@ Rationale: a permission failure is reported as one. Source: CLI Standard
 §4. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-056 @emph{GPU choice}
-Capsule shall use the GPU that udev marks as the boot VGA device, or the
-lowest-numbered DRM card when no device is so marked.
+Capsule shall use the DRM card whose PCI device has the sysfs attribute
+@file{boot_vga} set to 1, or the card with the lowest minor number when no
+device has it.
 
 Rationale: the choice is the one the firmware made, and is predictable.
 Source: CPS-NEED-004. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-057 @emph{Internal panel first}
-When an internal panel is connected, Capsule shall use it as the output.
+When an internal panel on the chosen GPU is connected, and either the lid is
+not closed or no other output on that GPU is connected, Capsule shall use
+the connected internal panel with the lowest connector name as the output.
 
-Rationale: a laptop shows the session on its own screen. Source:
+Rationale: a laptop shows the session on its own screen, but not on a shut
+lid beside a live monitor. Source:
 CPS-NEED-004. Method: test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-058 @emph{Output fallback}
-When no internal panel is connected, Capsule shall use the connected output
-with the lowest connector identifier.
+When CPS-SRS-057 selects no output, Capsule shall use the connected output on
+the chosen GPU with the lowest connector name.
 
 Rationale: the choice is deterministic. Source: CPS-NEED-004. Method: test.
 Priority: mandatory. Status: draft.
@@ -766,12 +868,14 @@ the output within 1 s.
 Rationale: switching back shows the session at once. Source: CPS-NEED-003.
 Method: test. Priority: mandatory. Status: draft.
 
-@item CPS-SRS-068 @emph{Output removed}
-When the output is disconnected while another output is connected, Capsule
-shall move the session to that output within 2 s.
+@item CPS-SRS-068 @emph{Output re-chosen}
+When an output is connected or disconnected, or the lid opens or closes,
+Capsule shall apply CPS-SRS-057 and CPS-SRS-058 again and move the session to
+the output they select within 2 s.
 
-Rationale: unplugging a monitor never ends the session. Source:
-CPS-NEED-004. Method: test. Priority: mandatory. Status: draft.
+Rationale: plugging, unplugging, and closing the lid never end the session
+or leave it on a dark screen. Source: CPS-NEED-004. Method: test. Priority:
+mandatory. Status: draft.
 
 @item CPS-SRS-069 @emph{No output}
 While no output is connected, Capsule shall keep the child running and shall
@@ -788,8 +892,9 @@ Rationale: suspend never costs the session. Source: CPS-NEED-004. Method:
 test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-071 @emph{Hand-back}
-When Capsule ends by any path, including a panic and @code{SIGKILL}, it
-shall leave the virtual terminal accepting keyboard input within 2 s.
+When Capsule exits by a path it handles, a panic included, it shall leave
+the virtual terminal in text mode accepting keyboard input within 2 s of
+exit.
 
 Rationale: no failure strands the seat. Source: CPS-NEED-003. Method: test.
 Priority: mandatory. Status: draft.
@@ -799,10 +904,42 @@ Capsule shall submit at most one frame to the output per vertical blank.
 
 Rationale: no tearing and no wasted rendering. Source: CPS-NEED-004.
 Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-116 @emph{Seat never active}
+When the seat session has not become active within 30 s of being opened,
+Capsule shall exit with status 1 after writing an error whose hint names the
+virtual terminal it was started on.
+
+Rationale: a session started on a background terminal fails visibly instead
+of waiting forever. Source: CPS-NEED-003. Method: test. Priority:
+mandatory. Status: draft.
+
+@item CPS-SRS-118 @emph{GPU lost}
+Capsule shall treat removal of the GPU in use as an error it cannot recover
+from (CPS-SRS-117).
+
+Rationale: a vanished GPU leaves nothing to render on. Source:
+CPS-NEED-003. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-119 @emph{Seat lost}
+Capsule shall treat loss of its seat session as an error it cannot recover
+from (CPS-SRS-117).
+
+Rationale: without the seat manager Capsule holds no device it may use.
+Source: CPS-NEED-003. Method: test. Priority: mandatory. Status: draft.
 @end table
+
+@strong{Assumption A-01.} When Capsule is killed by @code{SIGKILL}, the seat
+manager (seatd or systemd-logind) will return the virtual terminal to text
+mode, because Capsule can run no code of its own after that signal.  This is
+a statement about the platform, not a requirement; it is checked by a system
+test on the reference machine at G2 and at every release, and the result is
+recorded with the release manifest.
 
 @node Nested backend
 @section Nested backend
+
+These requirements apply under the nested backend.
 
 @table @asis
 @item CPS-SRS-073 @emph{Window}
@@ -831,10 +968,22 @@ Under the nested backend, Capsule shall open no DRM or input device node.
 
 Rationale: a nested Capsule never competes with its host for devices.
 Source: CPS-NEED-009. Method: test. Priority: mandatory. Status: draft.
+
+@item CPS-SRS-115 @emph{Host unreachable}
+When the nested backend cannot connect to the host display, Capsule shall
+exit with status 1 after writing an error whose hint suggests
+@option{--backend drm}.
+
+Rationale: a stale @env{WAYLAND_DISPLAY} or @env{DISPLAY} makes the
+automatic choice pick the nested backend; the error says how to override it.
+Source: CPS-NEED-003; CPS-NEED-007. Method: test. Priority: mandatory. Status: draft.
 @end table
 
 @node Keys and accessibility
 @section Keys and accessibility
+
+These requirements apply under every backend and mode unless their text
+names one.
 
 @table @asis
 @item CPS-SRS-077 @emph{No key bindings}
@@ -858,8 +1007,11 @@ mandatory. Status: draft.
 @node Budgets
 @section Budgets
 
-Each budget is measured on the reference machine with the reference
-workload, by tooling in CI on every release build (Standard §22.4).
+These requirements apply under the DRM backend.  Each budget is measured
+on the reference machine with the reference workload by a committed script,
+run for every release build as part of the release gate (Standard §22.4).
+CI runners have no seat or GPU, so CI tracks the nested-backend figures
+only, as an early signal.
 
 @table @asis
 @item CPS-SRS-079 @emph{Start-up}
@@ -879,8 +1031,9 @@ CPS-NEED-005; Standard §22.1. Method: test. Priority: mandatory.
 Status: draft.
 
 @item CPS-SRS-081 @emph{Input latency}
-Capsule shall deliver a key event to the focused client within 1 ms of
-reading it from the device, at the 99th percentile.
+Capsule shall flush the @code{wl_keyboard.key} event for a key press to the
+focused client's socket within 1 ms of libinput delivering that press to
+Capsule, at the 99th percentile.
 
 Rationale: typing through Capsule feels like typing without it. Source:
 CPS-NEED-001; Standard §22.1. Method: test. Priority: mandatory.
@@ -902,6 +1055,9 @@ Rationale: the login path stays small. Source: CPS-NEED-005; Standard
 
 @node Release
 @section Release
+
+These requirements apply to the repository and the release, whatever the
+backend.
 
 @table @asis
 @item CPS-SRS-084 @emph{Manual}
@@ -937,8 +1093,9 @@ Rationale: @samp{info capsule} works after installation. Source: Standard
 §8. Method: inspection. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-089 @emph{SBOM}
-The release CI run shall generate a software bill of materials from the
-locked inputs and publish it with a checksum.
+The release CI run shall generate a CycloneDX JSON software bill of
+materials from the locked inputs and attach it, with its SHA-256 checksum,
+to the GitHub release.
 
 Rationale: every shipped dependency is known. Source: Standard §24.3.
 Method: inspection. Priority: mandatory. Status: draft.
@@ -960,10 +1117,20 @@ Rationale: the Category B evidence floor. Source: Standard §21.2. Method:
 test. Priority: mandatory. Status: draft.
 
 @item CPS-SRS-092 @emph{Fuzzing}
-Each parser in Capsule's own crates shall have a fuzz target run in CI.
+Each parser shall have a fuzz target that CI runs for at least 60 s on every
+merge to @code{main}.
 
-Rationale: generated inputs find what the author did not think of. Source:
-Standard §21.2, §21.4. Method: inspection. Priority: mandatory.
+Rationale: generated inputs find what the author did not think of. The
+Wayland wire format is parsed by wayland-rs, qualified under §24, not here.
+Source: Standard §21.2, §21.4. Method: inspection. Priority: mandatory.
+Status: draft.
+
+@item CPS-SRS-127 @emph{No desktop in the closure}
+The runtime closure of Capsule's Nix package shall contain no package of
+COSMIC, GNOME, KDE Plasma, or niri.
+
+Rationale: rebuilding a desktop never rebuilds or changes the login path.
+Source: CPS-NEED-005. Method: inspection. Priority: mandatory.
 Status: draft.
 
 @item CPS-SRS-093 @emph{Mutation testing}
@@ -976,6 +1143,8 @@ Method: inspection. Priority: mandatory. Status: draft.
 
 @node XWayland
 @section XWayland
+
+These requirements apply under the DRM and nested backends.
 
 @table @asis
 @item CPS-SRS-094 @emph{On demand}
@@ -1009,6 +1178,8 @@ Method: test. Priority: optional. Status: draft.
 @node X11 kiosk mode
 @section X11 kiosk mode
 
+These requirements apply in X11 kiosk mode.
+
 @table @asis
 @item CPS-SRS-098 @emph{Window manager}
 When given @option{--backend x11}, Capsule shall act as the window manager
@@ -1025,7 +1196,7 @@ Rationale: two window managers never fight over one display. Source: CLI
 Standard §4. Method: test. Priority: optional. Status: draft.
 
 @item CPS-SRS-100 @emph{X11 windows fullscreen}
-In X11 kiosk mode, Capsule shall map every top-level window that has no
+In X11 kiosk mode, Capsule shall map every toplevel that has no
 parent at the size of the root window.
 
 Rationale: the program's windows fill the screen, whichever it maps first.
@@ -1039,7 +1210,8 @@ Rationale: dialogs stay visible. Source: CPS-NEED-010. Method: test.
 Priority: optional. Status: draft.
 
 @item CPS-SRS-102 @emph{X11 focus}
-Capsule shall give input focus to the most recently mapped top-level window.
+In X11 kiosk mode, Capsule shall give input focus to the most recently
+mapped toplevel.
 
 Rationale: a dialog takes the keys as soon as it appears. Source:
 CPS-NEED-010. Method: test. Priority: optional. Status: draft.
@@ -1065,11 +1237,27 @@ Rationale: the visible background follows the house palette. Source:
 Standard §11. Method: test. Priority: optional. Status: draft.
 
 @item CPS-SRS-112 @emph{X11 stacking}
-In X11 kiosk mode, Capsule shall stack the most recently mapped top-level
-window above every other.
+In X11 kiosk mode, Capsule shall stack the most recently mapped toplevel
+above every other.
 
 Rationale: a newly opened dialog is never hidden behind the program.
 Source: CPS-NEED-010. Method: test. Priority: optional. Status: draft.
+
+@item CPS-SRS-114 @emph{X11 child environment}
+In X11 kiosk mode, Capsule shall start the child with Capsule's own
+environment unchanged.
+
+Rationale: the program finds the X server through the @env{DISPLAY} it was
+started with. Source: CPS-NEED-008; CPS-NEED-010. Method: test. Priority:
+optional. Status: draft.
+
+@item CPS-SRS-120 @emph{X display unreachable}
+In X11 kiosk mode, when Capsule cannot connect to the display named by
+@env{DISPLAY}, it shall exit with status 1 after writing an error whose hint
+names the variable.
+
+Rationale: a missing X server is reported, not waited on. Source:
+CPS-NEED-007. Method: test. Priority: optional. Status: draft.
 @end table
 
 @bye

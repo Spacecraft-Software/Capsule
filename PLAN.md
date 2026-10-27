@@ -71,8 +71,8 @@ Tags are signed and pushed only on the maintainer's word.
 - [ ] P-009 `capsule-policy`: exit-status mapping and the termination-deadline state machine
       — CPS-SRS-014, 015
 - [ ] P-010 Argument parsing: program, trailing arguments, `--`, missing program, global
-      flags, `--backend`, `--quiet` with `--verbose`, a backend not built in —
-      CPS-SRS-011, 012, 013, 018, 029, 106, 108
+      flags, `--backend`, `--quiet` with `--verbose`, a backend or `--xwayland` not built in —
+      CPS-SRS-011, 012, 013, 018, 029, 106, 108, 121
 - [ ] P-011 Backend choice in `capsule-policy` — CPS-SRS-030
 - [ ] P-012 Diagnostics: output-mode cascade, severity tags, JSON error object, UTC
       timestamps, plain mode, `--quiet` — CPS-SRS-024, 025, 026, 028, 078, 107
@@ -85,27 +85,31 @@ Tags are signed and pushed only on the maintainer's word.
 ## M2 — Nested compositor
 
 - [ ] P-016 Compositor core: Smithay state, calloop loop, socket, child started after the
-      socket, child environment, no configuration read — CPS-SRS-010, 032, 033, 034, 110
+      socket, child environment and host `DISPLAY` removal, no configuration read, one
+      output at scale 1 and normal transform — CPS-SRS-010, 032, 033, 034, 110, 113, 122,
+      123, 126
 - [ ] P-017 Closed global list, with a test that reads the registry — CPS-SRS-035
 - [ ] P-018 Placement, stacking, and focus in `capsule-policy`, wired into `xdg_shell` —
       CPS-SRS-036, 037, 038, 039, 109
-- [ ] P-019 Popups — CPS-SRS-040
-- [ ] P-020 Seat: keymap and fallback, pointer focus, cursor — CPS-SRS-041, 042, 043, 044
+- [ ] P-019 Popups, constrained or unconstrained — CPS-SRS-040, 124
+- [ ] P-020 Seat: keymap and fallback, pointer focus, cursor and built-in cursor —
+      CPS-SRS-041, 042, 043, 044, 125
 - [ ] P-021 Clipboard and primary selection — CPS-SRS-045, 046
 - [ ] P-022 Decorations and the canvas-colour background (§11.6 resolution) —
       CPS-SRS-047, 048
-- [ ] P-023 Robustness: protocol errors, lifetime, termination and its deadline —
-      CPS-SRS-049, 050, 051, 052
+- [ ] P-023 Robustness: protocol errors, lifetime, termination and its deadline, fatal
+      errors — CPS-SRS-049, 050, 051, 052, 117
 - [ ] P-024 Damage-driven rendering — CPS-SRS-053
-- [ ] P-025 Nested backend: window, resize, close, no device nodes —
-      CPS-SRS-073, 074, 075, 076
+- [ ] P-025 Nested backend: window, resize, close, no device nodes, host unreachable —
+      CPS-SRS-073, 074, 075, 076, 115
 - [ ] P-026 Key delivery: nothing bound except the virtual-terminal chords — CPS-SRS-077
 - [ ] P-027 Integration harness: Capsule driven by a test client in CI; Alacritty + Nushell
       exercised nested under niri and under LeftWM
 
 ## M3 — Real hardware
 
-- [ ] P-028 Seat session through libseat; the no-seat error — CPS-SRS-054, 055
+- [ ] P-028 Seat session through libseat; the no-seat, never-active, and seat-lost cases —
+      CPS-SRS-054, 055, 116, 119
 - [ ] P-029 GPU and output choice in `capsule-policy` — CPS-SRS-056, 057, 058
 - [ ] P-030 DRM output at the preferred mode, paced to vertical blank — CPS-SRS-059, 072
 - [ ] P-031 Renderers: GLES through GBM and EGL, pixman fallback, no-renderer exit —
@@ -113,8 +117,10 @@ Tags are signed and pushed only on the maintainer's word.
 - [ ] P-032 libinput devices at their defaults — CPS-SRS-063, 064
 - [ ] P-033 Virtual-terminal switching, inactive and reactivated sessions —
       CPS-SRS-065, 066, 067
-- [ ] P-034 Output hotplug and the no-output state — CPS-SRS-068, 069
-- [ ] P-035 Hardware tests (feature `hardware-tests`): suspend and hand-back —
+- [ ] P-034 Output re-choice on hotplug and lid events, the no-output state, GPU removal —
+      CPS-SRS-068, 069, 118
+- [ ] P-035 Hardware tests (feature `hardware-tests`): suspend, hand-back, and the
+      `SIGKILL` system test for assumption A-01 —
       CPS-SRS-070, 071
 - [ ] P-036 Greeter smoke test on the ThinkPad: an ad-hoc session entry, Alacritty + Nushell
       usable for a working session
@@ -127,7 +133,8 @@ Tags are signed and pushed only on the maintainer's word.
 - [ ] P-039 Coverage gate and the `cargo mutants` triage — CPS-SRS-091, 093
 - [ ] P-040 Manual: user chapters, `Design`, `Interfaces`; Info, HTML, and PDF builds —
       CPS-SRS-084, 090
-- [ ] P-041 Packaging triad with `install-info` hooks — CPS-SRS-085, 086, 087, 088
+- [ ] P-041 Packaging triad with `install-info` hooks; closure free of desktop packages —
+      CPS-SRS-085, 086, 087, 088, 127
 - [ ] P-042 G3: SBOM, release manifest, traceability matrix artifact, `CHANGELOG.md`, signed
       tag `v0.1.0` — CPS-SRS-089
 
@@ -146,9 +153,9 @@ Tags are signed and pushed only on the maintainer's word.
 ## M7 — X11 kiosk mode: optional
 
 - [ ] P-047 `capsule-x11`: window-manager ownership and the display-taken exit —
-      CPS-SRS-098, 099 (optional)
+      CPS-SRS-098, 099, 120 (optional)
 - [ ] P-048 Placement, stacking, focus, no key grabs, and root background through
       `capsule-policy` —
       CPS-SRS-100, 101, 102, 104, 105, 112 (optional)
 - [ ] P-049 Exit-status contract and `xinit` use, tested under Xephyr and then on a machine
-      without KMS — CPS-SRS-103, CPS-NEED-010 (optional)
+      without KMS; the unchanged child environment — CPS-SRS-103, 114, CPS-NEED-010 (optional)

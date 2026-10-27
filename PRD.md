@@ -61,7 +61,9 @@ Settled with the maintainer on 2026-10-27 unless marked otherwise.
 | X11 | Three meanings, kept apart: nested under an X11 session (in scope, free); X11 programs through XWayland (optional, M6); a machine with no KMS (optional X11 kiosk mode, M7: Capsule as a tiny x11rb window manager under `xinit`). Running an X window manager such as LeftWM under Capsule is out of scope — Bravais keeps `startx` for those |
 | Introspection | `--describe`, `--schema`, `--dry-run` are **flags, not sub-commands**: the first positional argument is always the program, so a program named `schema` stays runnable. Tailors CLI Standard rules 4 and 7 (see [`COMPLIANCE.md`](COMPLIANCE.md)) |
 | Exit status | The child's status passes through unchanged (CPS-SRS-014, 015). Capsule's own failures use the canonical codes and **always** write an error object to stderr; the child's status never comes with one. That is how a caller tells a child that exited 4 from a Capsule that could not open the seat |
-| Privacy | Exactly fourteen protocol globals (CPS-SRS-035). No screen capture, input injection, layer shell, or virtual keyboard, ever |
+| Privacy | Exactly fourteen protocol globals, plus `xwayland_shell_v1` under `--xwayland` (CPS-SRS-035). No screen capture, input injection, layer shell, or virtual keyboard for Wayland clients, ever. X11 clients under XWayland or the X11 kiosk mode can capture and inject through the X server; that limit is accepted for those optional modes (CPS-NEED-006) |
+| Scope per backend | Every requirement section states the backends it applies under (G1 second pass, R-01) |
+| Output choice | Outputs on the chosen GPU only (no hybrid-GPU spanning). Internal panel first unless the lid is closed beside another output; otherwise the lowest connector name; re-run on every hotplug and lid event (CPS-SRS-057, 058, 068). Scale 1, normal transform (CPS-SRS-122, 123) |
 | Keys | Capsule binds nothing but Ctrl+Alt+F1–F12 under DRM (CPS-SRS-077), so no screen-reader chord is taken (§10.4) |
 | Palette | Steelbore Modern; the background is the resolved canvas colour (CPS-SRS-048) |
 | Category | **B** — a compositor crash kills every program in the session and loses unsaved work (§19.1). Texinfo SRS, CI traceability, budgets, ICD, baselines |
@@ -99,10 +101,13 @@ reordering risk and buy nothing at one client and one output. The decision is be
 against the input-latency and idle budgets (CPS-SRS-081, 082) at G2 and revisited only if one
 fails.
 
-**Safety model (§3.1).** Device access comes only through the seat session (CPS-SRS-054). On any
-exit — including `SIGKILL` and a panic — the kernel drops DRM master and the device descriptors
-when the process dies, and the seat manager restores the virtual terminal when its client
-disconnects (CPS-SRS-071; confirmed for seatd and logind at G2). The child is started with
+**Safety model (§3.1).** Device access comes only through the seat session (CPS-SRS-054). On every
+exit path Capsule handles, a panic included, it leaves the virtual terminal in text mode
+(CPS-SRS-071). After `SIGKILL` it can run nothing, so the kernel drops DRM master and the device
+descriptors when the process dies and the seat manager restores the virtual terminal when its
+client disconnects — a platform assumption (A-01 in the manual), checked by a system test at G2
+and at every release. A fatal error while the child runs ends the child first and exits 1
+(CPS-SRS-117); losing the GPU or the seat counts as one (CPS-SRS-118, 119). The child is started with
 `PR_SET_PDEATHSIG = SIGTERM`, so it never outlives Capsule. Setting it needs
 `CommandExt::pre_exec`, which is `unsafe`: that is the one `unsafe` site in Capsule's own code,
 and it calls only the async-signal-safe `prctl(2)`, with the safety argument written at the
@@ -111,8 +116,12 @@ abort never unwinds through Smithay's C callbacks.
 
 **Privacy model (§3.3, §9).** The advertised globals are a closed list (CPS-SRS-035). While the
 session is inactive, no input reaches any client (CPS-SRS-066). The child's environment is
-Capsule's own plus `WAYLAND_DISPLAY` and nothing else (CPS-SRS-034), so nothing about the
-session is hidden from, or added to, the program.
+Capsule's own plus `WAYLAND_DISPLAY` (CPS-SRS-034); under the nested backend the host's
+`DISPLAY` is removed, so an X11 fallback never reaches the host desktop (CPS-SRS-113).
+Capsule opens no file in a configuration directory, libraries included (CPS-SRS-110): the
+keymap is compiled with xkbcommon's default include paths disabled, because they would read
+`$XDG_CONFIG_HOME/xkb`, `~/.xkb`, and `/etc/xkb`; the system XKB data path is added back
+explicitly.
 
 **Dependencies (to be qualified at G2, §24).** `smithay` 0.7.0 (MIT; the latest crates.io
 release, 2025-06-24), `calloop` 0.14.5, `clap` 4.6.7, `x11rb` 0.14.0 (M7), plus `serde`,
@@ -125,7 +134,7 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 
 | Interface | Shape |
 |-----------|-------|
-| Command line | `capsule [OPTIONS] [--] <PROGRAM> [ARGS...]`; `--backend auto\|drm\|nested` (plus `x11` when built with `x11-kiosk`); `--describe`, `--schema`, `--dry-run`; every CLI Standard §3 global flag; `--xwayland` (M6) |
+| Command line | `capsule [OPTIONS] [--] <PROGRAM> [ARGS...]`; `--backend auto\|drm\|nested\|x11` (`x11` exits 2 unless built with `x11-kiosk`); `--describe`, `--schema`, `--dry-run`; every CLI Standard §3 global flag; `--xwayland` (M6) |
 | Exit status | Child's status, or 128+N on signal; Capsule's own: 1, 2, 4, 5, 126, 127 with an error object on stderr |
 | Diagnostics | stderr only; `[ERROR]`/`[WARN]`/`[OK]`/`[INFO]` in human mode; CLI Standard JSON error and `diagnostic` envelopes in machine mode |
 | Environment read | `XDG_RUNTIME_DIR`, `WAYLAND_DISPLAY`, `DISPLAY`, `XKB_DEFAULT_*`, `XCURSOR_THEME`, `XCURSOR_SIZE`, `AI_AGENT`, `AGENT`, `CI`, `NO_COLOR`, `SPACECRAFT_A11Y`, `SPACECRAFT_THEME` |
@@ -202,6 +211,7 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-107 Quiet
 - [ ] CPS-SRS-108 Backend not built
 - [ ] CPS-SRS-111 Version as JSON
+- [ ] CPS-SRS-121 XWayland not built
 
 
 ## M2 — Nested compositor
@@ -231,6 +241,14 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-053 Idle
 - [ ] CPS-SRS-109 Stacking
 - [ ] CPS-SRS-110 No configuration
+- [ ] CPS-SRS-113 Host display removed
+- [ ] CPS-SRS-115 Host unreachable
+- [ ] CPS-SRS-117 Fatal error
+- [ ] CPS-SRS-122 Scale
+- [ ] CPS-SRS-123 Transform
+- [ ] CPS-SRS-124 Unconstrained popup
+- [ ] CPS-SRS-125 Built-in cursor
+- [ ] CPS-SRS-126 One output
 - [ ] CPS-SRS-073 Window
 - [ ] CPS-SRS-074 Window resized
 - [ ] CPS-SRS-075 Window closed
@@ -254,11 +272,14 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-065 Virtual terminal switch
 - [ ] CPS-SRS-066 Inactive
 - [ ] CPS-SRS-067 Reactivation
-- [ ] CPS-SRS-068 Output removed
+- [ ] CPS-SRS-068 Output re-chosen
 - [ ] CPS-SRS-069 No output
 - [ ] CPS-SRS-070 Suspend
 - [ ] CPS-SRS-071 Hand-back
 - [ ] CPS-SRS-072 Frame pacing
+- [ ] CPS-SRS-116 Seat never active
+- [ ] CPS-SRS-118 GPU lost
+- [ ] CPS-SRS-119 Seat lost
 
 
 ## M4 — Budgets and release
@@ -278,6 +299,7 @@ Drafted into the ICD at G2 (§23), recorded in the manual's `Interfaces` node (C
 - [ ] CPS-SRS-091 Coverage
 - [ ] CPS-SRS-092 Fuzzing
 - [ ] CPS-SRS-093 Mutation testing
+- [ ] CPS-SRS-127 No desktop in the closure
 
 
 ## M5 — Bravais switch-over
@@ -316,6 +338,8 @@ release manifest.
 - [ ] CPS-SRS-104 X11 key bindings (optional)
 - [ ] CPS-SRS-105 X11 background (optional)
 - [ ] CPS-SRS-112 X11 stacking (optional)
+- [ ] CPS-SRS-114 X11 child environment (optional)
+- [ ] CPS-SRS-120 X display unreachable (optional)
 - [ ] CPS-NEED-010 Machines without kernel mode setting (optional)
 
 ---

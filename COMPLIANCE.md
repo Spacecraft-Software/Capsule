@@ -103,8 +103,25 @@ The reviewer judged sound, unprompted: every global named in 035 exists under th
 exit-code conventions (126, 127, 128+N, so 143 and 137 after 051 and 052); the `XKB_DEFAULT_*`
 and `XCURSOR_*` variables; the pixman fallback on dumb buffers; the idle requirements together.
 
-**Next:** the fixes land in their own PR, new obligations numbered from CPS-SRS-113. The gate
-then needs a third pass over the changed requirements only.
+**Fixes: 2026-10-27** (T-080). R-01 to R-17 and the NEED-005 note resolved as triaged:
+
+- Scope sentences open every requirement section and the chapter (R-01); CPS-SRS-010 and 102
+  name their modes.
+- New requirements CPS-SRS-113 to 127: host `DISPLAY` removed when nested (113); X11 child
+  environment (114, optional); nested host unreachable (115); seat never active (116); fatal
+  error while the child runs (117); GPU lost (118); seat lost (119); X display unreachable
+  (120, optional); `--xwayland` not built (121); scale 1 (122); normal transform (123);
+  unconstrained popup (124); built-in cursor (125); one output at a time (126, moved out of
+  Terminology); no desktop package in the closure (127).
+- CPS-SRS-071 now covers the exit paths Capsule handles; the `SIGKILL` case is assumption A-01,
+  a `will` statement checked by a system test (R-03).
+- Reworded: NEED-003, NEED-006, NEED-010; CPS-SRS-014, 015, 019, 021–023, 029, 034, 035,
+  037, 042, 044, 056–058, 068, 081, 089, 092, 110; the Budgets preamble.
+- Terminology: *connector name*, *lid closed*, *CLI Standard* (pinned to v1.1.0), *evidence
+  marker*, *parser*; "top-level window" replaced by *toplevel*.
+
+The set now holds 127 requirements, 112 of them required. **Next:** a third pass over the
+changed requirements only, by a fresh reader (T-081).
 
 ---
 
