@@ -26,6 +26,9 @@ ticks only when that test passes. Identifiers are permanent.
 - [x] T-001 P-001 Run the §20.4 gate over CPS-SRS-001–105 and CPS-NEED-001–010; record
       findings in `COMPLIANCE.md` "Gate records / G1"
 - [x] T-002 P-001 Fix every G1 finding in `doc/capsule.texi`, in its own PR
+- [ ] T-080 P-001 Fix the accepted second-pass findings (R-01–R-17 and the NEED-005 note),
+      new obligations from CPS-SRS-113, in its own PR
+- [ ] T-081 P-001 Third pass over the changed requirements only, by a fresh reader; record it
 - [ ] T-003 P-001 Flip every status to `baselined` (after T-018); maintainer pushes signed
       tag `g1-requirements-0.1`
 - [x] T-004 P-002 `LICENSE` (GNU's canonical GPL-3.0 text), `LICENSES/` symlink and
